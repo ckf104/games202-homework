@@ -23,20 +23,20 @@ TODO：如何生成面积光源的 shadow map
 ### 作业2 Notes
 #### 矩形的面积投影
 需要分别计算 cubemap 表示的环境光以及具有解析表达式的 brdf 的球谐系数，也就是需要计算它们与球谐函数乘积在球面上的积分。在作业 2 中，前者使用黎曼和估计，后者使用蒙特卡洛采样进行估计。使用黎曼和进行估计的想法是这样的，纹理上每个 texel 对应的面积就是黎曼和取微元立体角的粒度。我们假设位于 $(x,y)$ 的 texel 方块面积在单位球上的投影面积为 $f(x,y)$，那么我们有
-$$
+```math
 c_i = \sum_{x,y} SH_i(\vec{d_{xy}})tex(x,y)f(x,y)
-$$
+```
 其中 $c_i$ 是待求解的球谐系数，$\vec{d_{xy}}$ 是该 texel 的方向向量，而 $SH_{i}(\vec{d_{xy}})$ 则表示第 $i$ 个球谐函数在该方向上的取值。现在的问题变为如何计算一个方块在单位球上的投影面积，或者说计算这个方块相对于原点的立体角。根据二维前缀和的思路，我们可以把计算这个方块的投影面积转化为计算一个长为 $x_0$，宽为 $y_0$，并且一个顶点位于 $(0,0,1)$ 的矩形的投影面积（当然，这个矩形与 xy 平面平行）。根据立体角的定义，这个投影面积可以表示为
-$$
+```math
 S = \int_0^{y_0}\int_0^{x_0} \frac{1}{(x^2+y^2+1)^{\frac{3}{2}}}dxdy
-$$
+```
 通过 wolframalpha 我们注意到 
-$$
+```math
 \displaylines{
 S = \int_0^{y_0} dy \left. \frac{x}{(y^2+1)\sqrt{y^2+1+x^2}} \right|^{x_0}_{0} = \int_0^{y_0} \frac{x_0}{(y^2+1)\sqrt{y^2+1+x_0^2}}dy \\
 = -\left. tan^{-1}(\frac{-y\sqrt{x_0^2 + y^2 + 1} + y^2 + 1}{x_0})\right|^{y_0}_0 = tan^{-1}\frac{x_0 y_0}{\sqrt{1+x_0^2 + y_0^2}}
 }
-$$
+```
 最后一步使用了正切函数的和角公式来合并两个用反正切定义的角度。这就是作业 2 的 `CalcPreArea` 函数的由来。[Solid Angle of a Rectangular Plate](https://rxiv.org/pdf/2001.0603v1.pdf) 中也是通过积分爆算得到了这个结果。不过工口怪想到了一个更简单的几何方法，根据 [球面三角形的面积公式](https://zhuanlan.zhihu.com/p/97346034)，计算投影到球面上的球面四边形各个球面角的大小即可，而计算这个球面角又相当于计算平面夹角。稍微用平面法向量的点乘算一下余弦结果就出来的
 #### 球谐系数的旋转
 根据 [Spherical Harmonic Lighting: The Gritty Details](https://3dvar.com/Green2003Spherical.pdf)，我们知道
@@ -44,30 +44,30 @@ $$
 * 任意一球谐函数 $y(w)$，它在 $R$ 作用下的旋转 $y(R(w))$ 可由同阶的球谐函数的线性组合得到
 
 设我们对光源的球谐投影表达为 $L(w) \approx \sum_{i}L_i y_i(w)$，给定一个旋转矩阵 R，根据上面的性质，我们有
-$$
+```math
 L(R(w)) \approx \sum_{i}L_i y_i(R(w)) = \sum_{i}L_i \sum_{j}m_{ij}(R)y_j(w) = \boldsymbol{L}^T M(R) \boldsymbol{y}(w)
-$$
+```
 其中 $M(R)$ 是一个仅依赖于 $R$ 的矩阵，因为球谐函数的旋转可由同阶的球谐函数的线性组合得到，因此我们还知道 $M(R)$ 是一个分块对角矩阵。新的 $L(R(w))$ 的球谐系数由 $\boldsymbol{L}^T M(R)$ 给出，其中 $L^T$ 是原球谐系数组成的行向量。这解释了 [手把手教你写GAMES202作业](https://zhuanlan.zhihu.com/p/596050050) 中球谐系数应该右乘 $M(R)$，而不是左乘
 
 另外需要小心的一点是，在给环境光施加一个旋转矩阵 R 后，新的环境光应该是 $L(R^{-1}(w))$，而不是 $L(R(w))$
 #### 间接光预计算
 主要的实现参考的是 [Spherical Harmonic Lighting: The Gritty Details](https://3dvar.com/Green2003Spherical.pdf) 中的伪代码。大概思路是这样，我们要计算第 k 次弹射的间接光对点 p 的着色贡献，则有
-$$
+```math
 L_k(p) = \int max(\boldsymbol{n_p}\cdot w, 0)(1-V(p,w))L_{k-1}(Q(p,w))dw
-$$
+```
 这里 $Q(p,w)$ 表示在 $p$ 点向 $w$ 方向发出射线与场景的交点。我们在球面上均匀地选取 n 个采样点，根据蒙特卡洛积分有
-$$
+```math
 \displaylines{
 L_k(p) \approx \frac{4\pi}{n}\sum_{i=1}^n max(\boldsymbol{n_p}\cdot w_i, 0)(1-V(p,w_i))L_{k-1}(Q(p,w_i)) \\
 \approx \frac{4\pi}{n}\sum_{i=1}^n max(\boldsymbol{n_p}\cdot w_i, 0)(1-V(p,w_i))\sum_j T_{j,k-1}(Q(p,w_i)) L_j \\
 = \sum_{j} T_{j,k}(Q(p,w_i))L_j
 
 }
-$$
+```
 $T_{j,k}(p)$ 表示 $p$ 点在计算第 k 次弹射的光源贡献的着色贡献时的 radiance transfer 的球谐系数。其中 $T_{j,0}(p)$ 就表示 p 点在不考虑弹射时的 radiance transfer 的球谐系数，$L_j$ 表示环境光的球谐系数。这里的推导告诉我们，可以通过蒙特卡洛采样，可以从第 k-1 次弹射的 radiance transfer 的球谐系数，估计出第 k 次弹射的 radiance transfer 的球谐系数。最终 p 点的 radiance transfer 的球谐系数可以表示为
-$$
+```math
 T_j(p) = \sum_{k=0}T_{j,k}(p)
-$$
+```
 另外的一些细节
 * albedo 我取的 0.5
 * 结果记得做 gamma 矫正，否则看起来很暗
