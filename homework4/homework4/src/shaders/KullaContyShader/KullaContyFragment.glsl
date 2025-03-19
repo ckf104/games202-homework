@@ -50,8 +50,10 @@ float GeometrySchlickGGX(float NdotV, float roughness)
 float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness)
 {
     // TODO: To calculate Smith G here
-    float NoV = dot(N, V);
-    float NoL = dot(N, L);
+    // float NoV = dot(N, V);
+    // float NoL = dot(N, L);
+    float NoV = max(dot(N, V), 0.0);
+    float NoL = max(dot(N, L), 0.0);
     float ggx2 = GeometrySchlickGGX(NoV, roughness);
     float ggx1 = GeometrySchlickGGX(NoL, roughness);
 
@@ -61,7 +63,8 @@ float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness)
 vec3 fresnelSchlick(vec3 F0, vec3 V, vec3 H)
 {
     // TODO: To calculate Schlick F here
-    return F0 + (1.0 - F0) * pow(1.0 - dot(V, H), 5.0);
+    // return F0 + (1.0 - F0) * pow(1.0 - dot(V, H), 5.0);
+    return F0 + (1.0 - F0) * pow(1.0 - max(dot(V, H), 0.0), 5.0);
 }
 
 

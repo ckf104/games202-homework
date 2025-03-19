@@ -103,3 +103,20 @@ z_{ndc} = \frac{f+n}{f-n} + \frac{2fn}{f-n}\frac{1}{z_{view}} \approx \frac{f+n}
 ![漏光现象](pictures/漏光现象.png)
 
 产生漏光的原因是反射光线实际击中的 cube 面没有出现在平面中，导致误认为反射光线击中了 cube 上边的面，贡献了不该有的 radiance。如果调整摄像机视角，将反射光线实际击中的 cube 面显示出来，就会发现漏光现象消失了
+## 作业4 Notes
+GGX 重要性采样已经在 [Microfacet-Theory-and-Torrance-Sparrow-BRDF](https://ckf104.github.io/posts/Microfacet-Theory-and-Torrance-Sparrow-BRDF), 因此 assignment pdf 中使用的重要性采样，就等价于在椭圆上做均匀采样，然后沿着法线取与椭球的交点，交点的法线即为采样得到的微表面法线。我们可以具体推导一下。首先做线性变换 $p^\prime = Ap$，将椭球变为球，然后圆盘上的均匀采样使用变换
+```math
+x = \sqrt{a}cos(2\pi b)
+y = \sqrt{a}sin(2\pi b)
+```
+最后取法线修正矩阵把球面上的法线变换为椭圆上的法线即可，计算可知这个法线与 assignment pdf 中的公式一致
+
+另外，根据 [Revisiting Physically Based Shading at Imageworks
+](https://fpsunflower.github.io/ckulla/data/s2017_pbs_imageworks_slides_v2.pdf) 的修正，$f_add$ 项需要多乘一个 $F_avg$
+
+![过亮现象](pictures/亮点.png)
+产生上图中的亮点的原因在于 `GeometrySmith` 函数中计算点积时没有将负值 clamp 到 0，这导致两个 G1 项相乘，负负得正，原来应该为黑色的点就变亮了。在计算 `NoV` 和 `NoL` 时将其 clamp 到 0 就好了
+```glsl
+    float NoV = max(dot(N, V), 0.0);
+    float NoL = max(dot(N, L), 0.0);
+```
