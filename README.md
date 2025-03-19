@@ -114,7 +114,7 @@ y = \sqrt{a}sin(2\pi b)
 最后取法线修正矩阵把球面上的法线变换为椭圆上的法线即可，计算可知这个法线与 assignment pdf 中的公式一致
 
 另外，根据 [Revisiting Physically Based Shading at Imageworks
-](https://fpsunflower.github.io/ckulla/data/s2017_pbs_imageworks_slides_v2.pdf) 的修正，$f_add$ 项需要多乘一个 $F_avg$
+](https://fpsunflower.github.io/ckulla/data/s2017_pbs_imageworks_slides_v2.pdf) 的修正， $f_{add}$ 项需要多乘一个 $F_{avg}$
 
 ![过亮现象](pictures/亮点.png)
 产生上图中的亮点的原因在于 `GeometrySmith` 函数中计算点积时没有将负值 clamp 到 0，这导致两个 G1 项相乘，负负得正，原来应该为黑色的点就变亮了。在计算 `NoV` 和 `NoL` 时将其 clamp 到 0 就好了
