@@ -106,8 +106,10 @@ z_{ndc} = \frac{f+n}{f-n} + \frac{2fn}{f-n}\frac{1}{z_{view}} \approx \frac{f+n}
 ## 作业4 Notes
 GGX 重要性采样已经在 [Microfacet-Theory-and-Torrance-Sparrow-BRDF](https://ckf104.github.io/posts/Microfacet-Theory-and-Torrance-Sparrow-BRDF), 因此 assignment pdf 中使用的重要性采样，就等价于在椭圆上做均匀采样，然后沿着法线取与椭球的交点，交点的法线即为采样得到的微表面法线。我们可以具体推导一下。首先做线性变换 $p^\prime = Ap$，将椭球变为球，然后圆盘上的均匀采样使用变换
 ```math
-x = \sqrt{a}cos(2\pi b)
+\displaylines{
+x = \sqrt{a}cos(2\pi b) \\
 y = \sqrt{a}sin(2\pi b)
+}
 ```
 最后取法线修正矩阵把球面上的法线变换为椭圆上的法线即可，计算可知这个法线与 assignment pdf 中的公式一致
 
